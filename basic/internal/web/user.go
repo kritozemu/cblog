@@ -11,6 +11,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"go.uber.org/zap"
 	"net/http"
 	"time"
 )
@@ -25,13 +26,16 @@ const (
 type UserHandler struct {
 	ijwt.Handler
 	svc            service.UserService
+	codeSvc        service.CodeService
 	emailRexExp    *regexp.Regexp
 	passwordRexExp *regexp.Regexp
 }
 
-func NewUserHandler(svc service.UserService, hdl ijwt.Handler) *UserHandler {
+func NewUserHandler(svc service.UserService, codeSvc service.CodeService,
+	hdl ijwt.Handler) *UserHandler {
 	return &UserHandler{
 		svc:            svc,
+		codeSvc:        codeSvc,
 		Handler:        hdl,
 		emailRexExp:    regexp.MustCompile(emailRegexPattern, regexp.None),
 		passwordRexExp: regexp.MustCompile(passwordRegexPattern, regexp.None),
@@ -48,6 +52,105 @@ func (h *UserHandler) RegisterRoutes(server *gin.Engine) {
 	// GET /users/profile
 	ug.GET("/profile", ginx.WrapToken(h.Profile))
 	ug.GET("/refresh_token", h.RefreshToken)
+
+	ug.POST("/login_sms/code/send", h.SendLoginSMS)
+	ug.POST("/login_sms", h.LoginSMS)
+	ug.POST("/refresh_token", h.RefreshToken)
+
+}
+
+func (h *UserHandler) SendLoginSMS(ctx *gin.Context) {
+
+	var req SendLoginSmsReq
+	if err := ctx.Bind(&req); err != nil {
+		return
+	}
+
+	// 考虑手机号是否合法
+	if req.Phone == "" {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 4,
+			Msg:  "输入有误",
+		})
+		return
+	}
+
+	err := h.codeSvc.Send(ctx, bizLogin, req.Phone)
+
+	switch {
+	case err == nil:
+		ctx.JSON(http.StatusOK, Result{
+			Msg: "发送成功",
+		})
+	case errors.Is(err, service.ErrCodeSendTooMany):
+		zap.L().Warn("短信发送太频繁",
+			zap.Error(err))
+		ctx.JSON(http.StatusOK, Result{
+			Msg: "发送太频繁，请稍后再试",
+		})
+	default:
+		zap.L().Error("短信发送失败",
+			zap.Error(err))
+		ctx.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "系统错误",
+		})
+	}
+}
+
+func (h *UserHandler) LoginSMS(ctx *gin.Context) {
+	var req LoginSMS
+	if err := ctx.Bind(&req); err != nil {
+		return
+	}
+
+	// 这边，可以加上各种校验
+	ok, err := h.codeSvc.Verify(ctx, bizLogin, req.Phone, req.Code)
+	if err != nil {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "系统错误",
+		})
+		zap.L().Error("校验验证码出错", zap.Error(err),
+			// 不能这样打，因为手机号码是敏感数据，你不能达到日志里面
+			// 打印加密后的串
+			// 脱敏，152****1234
+			zap.String("手机号码", req.Phone))
+		// 最多最多就这样
+		zap.L().Debug("", zap.String("手机号码", req.Phone))
+		return
+	}
+	if !ok {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 4,
+			Msg:  "验证码有误",
+		})
+		return
+	}
+
+	// 我这个手机号，会不会是一个新用户呢？
+	// 这样子
+	user, err := h.svc.FindOrCreate(ctx, req.Phone)
+	if err != nil {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "系统错误",
+		})
+		return
+	}
+
+	if err = h.SetLoginToken(ctx, user.Id); err != nil {
+		// 记录日志
+		ctx.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "系统错误",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, Result{
+		Msg: "验证码校验通过",
+	})
 }
 
 func (h *UserHandler) SignUp(ctx *gin.Context, req SignUpReq) (ginx.Result, error) {

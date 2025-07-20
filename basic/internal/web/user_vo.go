@@ -26,3 +26,18 @@ type ProfileUser struct {
 	AboutMe  string `json:"aboutMe"`
 	Birthday string `json:"birthday"`
 }
+
+type SendLoginSmsReq struct {
+	Phone string `json:"phone"`
+}
+
+type LoginSMS struct {
+	Phone string `json:"phone"`
+	Code  string `json:"code"`
+}
+
+type Result struct {
+	Msg  string `json:"msg"`
+	Code int    `json:"code"`
+	Data string `json:"data"`
+}

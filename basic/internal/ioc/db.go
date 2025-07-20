@@ -17,13 +17,16 @@ func InitDB() *gorm.DB {
 	if err != nil {
 		panic(fmt.Sprintf("database init errs:%v", err))
 	}
+
 	db, err := gorm.Open(mysql.Open(cfg.DSN), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}
+
 	err = dao.InitTables(db)
 	if err != nil {
 		panic(err)
 	}
+
 	return db
 }

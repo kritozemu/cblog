@@ -20,6 +20,8 @@ require (
 	github.com/spf13/pflag v1.0.6
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.1200
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.1200
 	go.etcd.io/etcd/client/v3 v3.6.2
 	go.mongodb.org/mongo-driver v1.17.3
 	go.opentelemetry.io/otel v1.37.0
