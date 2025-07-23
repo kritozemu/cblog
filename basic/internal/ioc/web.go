@@ -1,6 +1,7 @@
 package ioc
 
 import (
+	"compus_blog/basic/internal/pkg/ginx"
 	"compus_blog/basic/internal/pkg/ginx/middlewares/ratelimit"
 	"compus_blog/basic/internal/pkg/limiter"
 	"compus_blog/basic/internal/pkg/logger"
@@ -10,20 +11,30 @@ import (
 	"context"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
 	"time"
 )
 
 func InitWebServer(mdls []gin.HandlerFunc,
-	userhdl *web.UserHandler) *gin.Engine {
+	userhdl *web.UserHandler,
+	arthdl *web.ArticleHandler) *gin.Engine {
 	server := gin.Default()
 	server.Use(mdls...)
 	userhdl.RegisterRoutes(server)
+	arthdl.RegisterRoutes(server)
 	return server
 }
 
 func InitGinMiddleWares(redisClient redis.Cmdable, hdl ijwt.Handler,
 	l logger.LoggerV1) []gin.HandlerFunc {
+	ginx.InitCounter(prometheus.CounterOpts{
+		Namespace: "ice_juicy",
+		Subsystem: "cblog",
+		Name:      "biz_code",
+		Help:      "统计业务错误码",
+	})
+
 	return []gin.HandlerFunc{
 		cors.New(cors.Config{
 			AllowOrigins: []string{"http://localhost:3000"},

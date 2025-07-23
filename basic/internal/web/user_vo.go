@@ -39,5 +39,5 @@ type LoginSMS struct {
 type Result struct {
 	Msg  string `json:"msg"`
 	Code int    `json:"code"`
-	Data string `json:"data"`
+	Data any    `json:"data"`
 }

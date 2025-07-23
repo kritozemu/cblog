@@ -54,6 +54,6 @@ func (b *LoginJwtMiddlewareBuilder) CheckLogin() gin.HandlerFunc {
 			return
 		}
 
-		ctx.Set("user", uc)
+		ctx.Set("users", uc)
 	}
 }

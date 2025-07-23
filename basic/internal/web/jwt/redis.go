@@ -20,7 +20,7 @@ type RedisJWTHandler struct {
 func NewRedisJWTHandler(client redis.Cmdable) Handler {
 	return &RedisJWTHandler{
 		client:        client,
-		signingMethod: jwt.SigningMethodHS512,
+		signingMethod: jwt.SigningMethodHS256,
 		rcExpiration:  time.Hour * 24 * 7,
 	}
 }
@@ -64,7 +64,7 @@ func (h *RedisJWTHandler) SetLoginToken(ctx *gin.Context, uid int64) error {
 func (h *RedisJWTHandler) ClearToken(ctx *gin.Context) error {
 	ctx.Header("x-jwt-token", "")
 	ctx.Header("x-refresh-token", "")
-	uc := ctx.MustGet("user").(UserClaims)
+	uc := ctx.MustGet("users").(UserClaims)
 
 	return h.client.Set(ctx,
 		fmt.Sprintf("users:ssid:%s", uc.Ssid),
@@ -75,7 +75,7 @@ func (h *RedisJWTHandler) SetJWTToken(ctx *gin.Context, uid int64, ssid string) 
 	uc := UserClaims{
 		Uid:       uid,
 		Ssid:      ssid,
-		UserAgent: ctx.GetHeader("User-Agent"),
+		UserAgent: ctx.Request.UserAgent(),
 		RegisteredClaims: jwt.RegisteredClaims{
 			// 1 分钟过期
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 30)),
@@ -107,8 +107,8 @@ func (h *RedisJWTHandler) setRefreshToken(ctx *gin.Context, uid int64, ssid stri
 	return nil
 }
 
-var JWTKey = []byte("k6CswdUm77WKcbM68UQUuxVsHSpTCwgK")
-var RCJWTKey = []byte("k6CswdUm77WKcbM68UQUuxVsHSpTCwgA")
+var JWTKey = []byte("yflnlfSKD6nYhF4n")
+var RCJWTKey = []byte("k6CswdUm77WKcbM68UQUuxVsHSpTCwgK")
 
 type RefreshClaims struct {
 	jwt.RegisteredClaims

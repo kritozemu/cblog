@@ -16,6 +16,8 @@ import (
 	"time"
 )
 
+var _ handler = (*UserHandler)(nil)
+
 const (
 	emailRegexPattern = "^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$"
 	// 和上面比起来，用 ` 看起来就比较清爽

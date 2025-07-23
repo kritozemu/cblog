@@ -1,4 +1,3 @@
-version: "3"
 # 我这个 docker compose 由几个服务组成
 services:
   mysql:
