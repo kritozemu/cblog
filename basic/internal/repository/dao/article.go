@@ -105,7 +105,7 @@ func (dao *ArticleDAOStruct) Sync(ctx context.Context, art Article) (int64, erro
 			"status":  pubArticle.Status,
 			"Utime":   now,
 		}),
-	}).Create(pubArticle).Error
+	}).Create(&pubArticle).Error
 	if err != nil {
 		return 0, err
 	}

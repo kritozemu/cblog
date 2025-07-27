@@ -28,7 +28,7 @@ type ArticleRepositoryStruct struct {
 	l       logger.LoggerV1
 }
 
-func NewArticleRepositoryStruct(dao dao.ArticleDAO, cache cache.ArticleCache,
+func NewArticleRepository(dao dao.ArticleDAO, cache cache.ArticleCache,
 	usrRepo UserRepository, l logger.LoggerV1) ArticleRepository {
 	return &ArticleRepositoryStruct{
 		dao:     dao,
@@ -77,6 +77,26 @@ func (a *ArticleRepositoryStruct) Sync(ctx context.Context, art domain.Article) 
 			// 比如说输出 WARN 日志
 		}
 	}
+
+	// 在这里尝试，设置缓存
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		// 你可以灵活设置过期时间
+		user, er := a.usrRepo.FindById(ctx, art.Author.Id)
+		if er != nil {
+			// 要记录日志
+			return
+		}
+		art.Author = domain.Author{
+			Id:   user.Id,
+			Name: user.Nickname,
+		}
+		er = a.cache.SetPub(ctx, art)
+		if er != nil {
+			// 记录日志
+		}
+	}()
 	return id, err
 }
 
@@ -105,16 +125,16 @@ func (a *ArticleRepositoryStruct) toDomain(article dao.Article) domain.Article {
 }
 
 func (a *ArticleRepositoryStruct) List(ctx context.Context, uid int64, offset int, limit int) ([]domain.Article, error) {
-	//if offset == 0 && limit <= 100 {
-	//	data, err := a.cache.GetFirstPage(ctx, uid)
-	//	if err == nil {
-	//		go func() {
-	//			a.preCache(ctx, data)
-	//		}()
-	//		return data, nil
-	//	}
-	//
-	//}
+	if offset == 0 && limit <= 100 {
+		data, err := a.cache.GetFirstPage(ctx, uid)
+		if err == nil {
+			go func() {
+				a.preCache(ctx, data)
+			}()
+			return data, nil
+		}
+
+	}
 
 	res, err := a.dao.GetByAuthor(ctx, uid, offset, limit)
 	if err != nil {
@@ -125,14 +145,14 @@ func (a *ArticleRepositoryStruct) List(ctx context.Context, uid int64, offset in
 		return a.toDomain(src)
 	})
 
-	////回写缓存
-	//go func() {
-	//	er := a.cache.SetFirstPage(ctx, uid, data)
-	//	if er != nil {
-	//		a.l.Error("回写缓存失败", logger.Error(err))
-	//	}
-	//	a.preCache(ctx, data)
-	//}()
+	//回写缓存
+	go func() {
+		er := a.cache.SetFirstPage(ctx, uid, data)
+		if er != nil {
+			a.l.Error("回写缓存失败", logger.Error(err))
+		}
+		a.preCache(ctx, data)
+	}()
 	return data, nil
 }
 

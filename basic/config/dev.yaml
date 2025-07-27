@@ -6,3 +6,7 @@ redis:
 
 db:
   dsn: "root:123@tcp(localhost:13316)/cblog"
+
+kafka:
+  addrs:
+    - "localhost:9094"

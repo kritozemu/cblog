@@ -7,6 +7,7 @@
 package main
 
 import (
+	"compus_blog/basic/internal/events/article"
 	"compus_blog/basic/internal/ioc"
 	"compus_blog/basic/internal/repository"
 	"compus_blog/basic/internal/repository/cache"
@@ -14,12 +15,12 @@ import (
 	"compus_blog/basic/internal/service"
 	"compus_blog/basic/internal/web"
 	"compus_blog/basic/internal/web/jwt"
-	"github.com/gin-gonic/gin"
+	"github.com/google/wire"
 )
 
 // Injectors from wire.go:
 
-func InitWebServer() *gin.Engine {
+func InitWebServer() *App {
 	cmdable := ioc.InitRedis()
 	handler := jwt.NewRedisJWTHandler(cmdable)
 	loggerV1 := ioc.InitLogger()
@@ -36,9 +37,29 @@ func InitWebServer() *gin.Engine {
 	userHandler := web.NewUserHandler(userService, codeService, handler)
 	articleDAO := dao.NewArticleDAOStruct(db)
 	articleCache := cache.NewArticleCacheStruct(cmdable)
-	articleRepository := repository.NewArticleRepositoryStruct(articleDAO, articleCache, userRepository, loggerV1)
-	articleService := service.NewArticleServiceStruct(articleRepository)
-	articleHandler := web.NewArticleHandler(articleService, loggerV1)
+	articleRepository := repository.NewArticleRepository(articleDAO, articleCache, userRepository, loggerV1)
+	client := ioc.InitKafka()
+	syncProducer := ioc.InitSyncProducer(client)
+	producer := article.NewKafkaProducer(syncProducer, loggerV1)
+	articleService := service.NewArticleServiceStruct(articleRepository, producer, loggerV1)
+	interactiveDAO := dao.NewInteractiveDAO(db)
+	interactiveCache := cache.NewInteractiveCache(cmdable)
+	interactiveRepository := repository.NewInteractiveRepository(interactiveDAO, interactiveCache, loggerV1)
+	interactiveService := service.NewInteractiveService(interactiveRepository, loggerV1)
+	articleHandler := web.NewArticleHandler(articleService, loggerV1, interactiveService)
 	engine := ioc.InitWebServer(v, userHandler, articleHandler)
-	return engine
+	interactiveReadEventBatchConsumer := article.NewInteractiveReadEventBatchConsumer(client, loggerV1, interactiveRepository)
+	v2 := ioc.NewConsumers(interactiveReadEventBatchConsumer)
+	app := &App{
+		server:    engine,
+		consumers: v2,
+	}
+	return app
 }
+
+// wire.go:
+
+// interactive
+var interactiveSvcProvider = wire.NewSet(dao.NewInteractiveDAO, repository.NewInteractiveRepository, cache.NewInteractiveCache, service.NewInteractiveService)
+
+var thirdPartSet = wire.NewSet(ioc.InitDB, ioc.InitRedis, ioc.InitLogger, ioc.InitKafka)

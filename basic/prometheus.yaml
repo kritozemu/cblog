@@ -1,0 +1,7 @@
+scrape_configs:
+  - job_name: "cblog"
+    scrape_interval: 5s
+    scrape_timeout: 3s
+    static_configs:
+      #      - 访问端口
+      - targets: ["host.docker.internal:8081"]

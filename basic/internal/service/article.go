@@ -2,6 +2,8 @@ package service
 
 import (
 	"compus_blog/basic/internal/domain"
+	"compus_blog/basic/internal/events/article"
+	"compus_blog/basic/internal/pkg/logger"
 	"compus_blog/basic/internal/repository"
 	"context"
 	"time"
@@ -19,11 +21,19 @@ type ArticleService interface {
 }
 
 type ArticleServiceStruct struct {
-	repo repository.ArticleRepository
+	repo     repository.ArticleRepository
+	producer article.Producer
+	l        logger.LoggerV1
+	ch       chan article.ReadEvent
 }
 
-func NewArticleServiceStruct(repo repository.ArticleRepository) ArticleService {
-	return &ArticleServiceStruct{repo: repo}
+func NewArticleServiceStruct(repo repository.ArticleRepository,
+	producer article.Producer, l logger.LoggerV1) ArticleService {
+	return &ArticleServiceStruct{
+		repo:     repo,
+		producer: producer,
+		l:        l,
+	}
 }
 
 func (s *ArticleServiceStruct) Save(ctx context.Context, art domain.Article) (int64, error) {
@@ -60,32 +70,80 @@ func (s *ArticleServiceStruct) GetById(ctx context.Context, id int64) (domain.Ar
 
 func (s *ArticleServiceStruct) GetPublishedById(ctx context.Context, id, uid int64) (domain.Article, error) {
 	art, err := s.repo.GetPublishedById(ctx, id)
-	//TODO implement me
-	panic("implement me")
-	//if err == nil {
-	//	// 每次打开一篇文章，就发一条消息
-	//	go func() {
-	//		// 生产者也可以通过改批量来提高性能
-	//		er := s.producer.ProduceReadEvent(
-	//			ctx,
-	//			events.ReadEvent{
-	//				// 即便你的消费者要用 art 的里面的数据，
-	//				// 让它去查询，你不要在 event 里面带
-	//				Uid: uid,
-	//				Aid: id,
-	//			})
-	//		if er != nil {
-	//			svc.l.Error("发送读者阅读事件失败")
-	//		}
-	//	}()
-	//
-	//	//go func() {
-	//	//	// 改批量的做法
-	//	//	svc.ch <- readInfo{
-	//	//		aid: id,
-	//	//		uid: uid,
-	//	//	}
-	//	//}()
-	//}
+	if err == nil {
+		// 每次打开一篇文章，就发一条消息
+		go func() {
+			// 生产者也可以通过改批量来提高性能
+			er := s.producer.ProduceReadEvent(
+				ctx, article.ReadEvent{
+					// 即便你的消费者要用 art 的里面的数据，
+					// 让它去查询，你不要在 event 里面带
+					Uid: uid,
+					Aid: id,
+				})
+			if er != nil {
+				s.l.Error("发送读者阅读事件失败")
+			}
+		}()
+
+		//go func() {
+		//	// 改批量的做法
+		//	svc.ch <- readInfo{
+		//		aid: id,
+		//		uid: uid,
+		//	}
+		//}()
+	}
 	return art, err
+}
+
+func (s *ArticleServiceStruct) GetPublishedByIdV1(ctx context.Context, id, uid int64) (domain.Article, error) {
+	// 另一个选项，在这里组装 Author，调用 UserService
+	art, err := s.repo.GetPublishedById(ctx, id)
+	if err == nil {
+		go func() {
+			// 改批量的做法
+			s.ch <- article.ReadEvent{
+				Uid: uid,
+				Aid: id,
+			}
+		}()
+	}
+	return art, err
+}
+
+func (s *ArticleServiceStruct) batchSendReadInfo(ctx context.Context) {
+	// 10 个一批
+	// 单个转批量都要考虑的兜底问题
+	for {
+		ctx, cancel := context.WithTimeout(ctx, time.Second)
+		const batchSize = 10
+		events := make([]article.ReadEvent, 0, batchSize)
+		send := false
+		for !send {
+			select {
+			// 这边是超时了
+			case <-ctx.Done():
+				// 也要执行发送
+				//goto send
+				send = true
+			case info, ok := <-s.ch:
+				if !ok {
+					cancel()
+					send = true
+					continue
+				}
+				events = append(events, info)
+				// 凑够了
+				if len(events) == batchSize {
+					//goto send
+					send = true
+				}
+			}
+		}
+		//send:
+		// 装满了，凑够了一批
+		s.producer.BatchProduceReadEventV1(context.Background(), events)
+		cancel()
+	}
 }

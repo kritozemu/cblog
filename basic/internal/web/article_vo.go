@@ -31,6 +31,7 @@ type ArticleReq struct {
 
 type CollectReq struct {
 	Id      int64 `json:"id"`
+	Cid     int64 `json:"cid"`
 	Collect bool  `json:"collect"`
 }
 

@@ -3,6 +3,7 @@
 package main
 
 import (
+	"compus_blog/basic/internal/events/article"
 	"compus_blog/basic/internal/ioc"
 	"compus_blog/basic/internal/repository"
 	"compus_blog/basic/internal/repository/cache"
@@ -10,15 +11,35 @@ import (
 	"compus_blog/basic/internal/service"
 	"compus_blog/basic/internal/web"
 	ijwt "compus_blog/basic/internal/web/jwt"
-	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 )
 
-func InitWebServer() *gin.Engine {
+// interactive
+var interactiveSvcProvider = wire.NewSet(dao.NewInteractiveDAO,
+	repository.NewInteractiveRepository,
+	cache.NewInteractiveCache,
+	service.NewInteractiveService,
+)
+
+var thirdPartSet = wire.NewSet(
+	//第三方服务
+	ioc.InitDB, ioc.InitRedis,
+	ioc.InitLogger,
+	ioc.InitKafka,
+)
+
+func InitWebServer() *App {
 	wire.Build(
-		//第三方服务
-		ioc.InitDB, ioc.InitRedis,
-		ioc.InitLogger,
+
+		interactiveSvcProvider,
+		thirdPartSet,
+
+		// consumer
+		article.NewKafkaProducer,
+		article.NewInteractiveReadEventBatchConsumer,
+
+		ioc.InitSyncProducer,
+		ioc.NewConsumers,
 
 		//dao
 		dao.NewUserDAO,
@@ -30,7 +51,7 @@ func InitWebServer() *gin.Engine {
 		//repository
 		repository.NewUserRepository,
 		repository.NewCodeRepository,
-		repository.NewArticleRepositoryStruct,
+		repository.NewArticleRepository,
 		// 直接基于内存实现
 		ioc.InitSMSService,
 
@@ -44,6 +65,7 @@ func InitWebServer() *gin.Engine {
 		ijwt.NewRedisJWTHandler,
 		ioc.InitGinMiddleWares,
 		ioc.InitWebServer,
+		wire.Struct(new(App), "*"),
 	)
-	return gin.Default()
+	return new(App)
 }
