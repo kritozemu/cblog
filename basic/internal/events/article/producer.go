@@ -1,7 +1,7 @@
 package article
 
 import (
-	"compus_blog/basic/internal/pkg/logger"
+	logger2 "compus_blog/basic/pkg/logger"
 	"context"
 	"encoding/json"
 	"github.com/IBM/sarama"
@@ -16,10 +16,10 @@ type Producer interface {
 
 type KafkaProducer struct {
 	producer sarama.SyncProducer
-	l        logger.LoggerV1
+	l        logger2.LoggerV1
 }
 
-func NewKafkaProducer(producer sarama.SyncProducer, l logger.LoggerV1) Producer {
+func NewKafkaProducer(producer sarama.SyncProducer, l logger2.LoggerV1) Producer {
 	return &KafkaProducer{
 		producer: producer,
 		l:        l,
@@ -45,8 +45,8 @@ func (p *KafkaProducer) BatchProduceReadEventV1(ctx context.Context, evts []Read
 	for _, evt := range evts {
 		data, err := json.Marshal(evt)
 		if err != nil {
-			p.l.Error("消息序列化失败", logger.Error(err),
-				logger.Int64("uid:", evt.Uid), logger.Int64("aid:", evt.Aid))
+			p.l.Error("消息序列化失败", logger2.Error(err),
+				logger2.Int64("uid:", evt.Uid), logger2.Int64("aid:", evt.Aid))
 			failedEvts = append(failedEvts, evt) // 收集失败事件
 			continue                             // 直接跳过，不加入批次
 		}
@@ -76,7 +76,7 @@ func (p *KafkaProducer) BatchProduceReadEventV1(ctx context.Context, evts []Read
 		}
 		// 若上下文已取消，停止重试
 		if ctx.Err() != nil {
-			p.l.Error("上下文已取消,停止重试kafka的消息发送", logger.Error(ctx.Err()))
+			p.l.Error("上下文已取消,停止重试kafka的消息发送", logger2.Error(ctx.Err()))
 			return
 		}
 		// 退避延迟（指数退避+随机抖动）
@@ -91,7 +91,7 @@ func (p *KafkaProducer) BatchProduceReadEventV1(ctx context.Context, evts []Read
 
 	// 多次重试失败后，将整个批次消息加入失败存储
 	p.saveFailedBatch(msgs)
-	p.l.Error("批量消息发送失败", logger.Int64("已重试", maxRetry))
+	p.l.Error("批量消息发送失败", logger2.Int64("已重试", maxRetry))
 }
 
 // 通过日志告警、持久化到本地文件 / 数据库等方式兜底

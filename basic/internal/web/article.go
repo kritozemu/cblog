@@ -1,11 +1,12 @@
 package web
 
 import (
+	intrv1 "compus_blog/basic/api/proto/gen/intr/v1"
 	"compus_blog/basic/internal/domain"
-	"compus_blog/basic/internal/pkg/ginx"
-	"compus_blog/basic/internal/pkg/logger"
 	"compus_blog/basic/internal/service"
 	"compus_blog/basic/internal/web/jwt"
+	"compus_blog/basic/pkg/ginx"
+	"compus_blog/basic/pkg/logger"
 	"fmt"
 	"github.com/ecodeclub/ekit/slice"
 	"github.com/gin-gonic/gin"
@@ -19,13 +20,13 @@ var _ handler = (*UserHandler)(nil)
 
 type ArticleHandler struct {
 	svc     service.ArticleService
-	intrSvc service.InteractiveService
+	intrSvc intrv1.InteractiveServiceClient
 	l       logger.LoggerV1
 	biz     string
 }
 
 func NewArticleHandler(svc service.ArticleService, l logger.LoggerV1,
-	intrSvc service.InteractiveService) *ArticleHandler {
+	intrSvc intrv1.InteractiveServiceClient) *ArticleHandler {
 	return &ArticleHandler{
 		svc:     svc,
 		l:       l,
@@ -249,27 +250,24 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context) {
 
 	uc := ctx.MustGet("users").(jwt.UserClaims)
 
-	go func() {
-		er := h.intrSvc.IncrReadCnt(ctx, h.biz, id)
-		if er != nil {
-			h.l.Error("增加阅读计数失败",
-				logger.Int64("aid", id),
-				logger.Error(err))
-		}
-	}()
+	var (
+		eg   errgroup.Group
+		art  domain.Article
+		intr *intrv1.GetResponse
+	)
 
-	var eg errgroup.Group
-
-	var art domain.Article
 	eg.Go(func() error {
 		art, err = h.svc.GetPublishedById(ctx, id, uc.Uid)
 		return err
 	})
 
-	var intr domain.Interactive
 	eg.Go(func() error {
-		intr, err = h.intrSvc.Get(ctx, h.biz, id, uc.Uid)
+		//intr, err = h.intrSvc.Get(ctx, h.biz, id, uc.Uid)
+		intr, err = h.intrSvc.Get(ctx, &intrv1.GetRequest{
+			Biz: h.biz, BizId: id, Uid: uc.Uid,
+		})
 		return err
+
 	})
 
 	//在这儿等，要保证前面两个
@@ -282,6 +280,15 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context) {
 		})
 		return
 	}
+
+	//go func() {
+	//	er := h.intrSvc.IncrReadCnt(ctx, h.biz, id)
+	//	if er != nil {
+	//		h.l.Error("增加阅读计数失败",
+	//			logger.Int64("aid", id),
+	//			logger.Error(err))
+	//	}
+	//}()
 
 	ctx.JSON(http.StatusOK, Result{
 		Data: ArticleVo{
@@ -296,11 +303,11 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context) {
 			Ctime:      art.Ctime.Format(time.DateTime),
 			Utime:      art.Utime.Format(time.DateTime),
 
-			Liked:      intr.Liked,
-			Collected:  intr.Collected,
-			ReadCnt:    intr.ReadCnt,
-			LikeCnt:    intr.LikeCnt,
-			CollectCnt: intr.CollectCnt,
+			ReadCnt:    intr.Intr.ReadCnt,
+			CollectCnt: intr.Intr.CollectCnt,
+			LikeCnt:    intr.Intr.LikeCnt,
+			Liked:      intr.Intr.Liked,
+			Collected:  intr.Intr.Collected,
 		},
 	})
 
@@ -309,9 +316,15 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context) {
 func (h *ArticleHandler) Like(ctx *gin.Context, req LikeReq, uc jwt.UserClaims) (ginx.Result, error) {
 	var err error
 	if req.Like {
-		err = h.intrSvc.Like(ctx, h.biz, req.Id, uc.Uid)
+		// 点赞
+		_, err = h.intrSvc.Like(ctx, &intrv1.LikeRequest{
+			Biz: h.biz, BizId: req.Id, Uid: uc.Uid,
+		})
 	} else {
-		err = h.intrSvc.CancelLike(ctx, h.biz, req.Id, uc.Uid)
+		// 取消点赞
+		_, err = h.intrSvc.CancelLike(ctx, &intrv1.CancelLikeRequest{
+			Biz: h.biz, BizId: req.Id, Uid: uc.Uid,
+		})
 	}
 
 	if err != nil {
@@ -330,7 +343,9 @@ func (h *ArticleHandler) Collect(ctx *gin.Context, req CollectReq, uc jwt.UserCl
 	//} else {
 	//	err = h.intrSvc.CancelLike(ctx, h.biz, req.Id, uc.Uid)
 	//}
-	err := h.intrSvc.Collect(ctx, h.biz, req.Id, req.Cid, uc.Uid)
+	_, err := h.intrSvc.Collect(ctx, &intrv1.CollectRequest{
+		Biz: h.biz, BizId: req.Id, Uid: uc.Uid, Cid: req.Cid,
+	})
 
 	if err != nil {
 		return ginx.Result{

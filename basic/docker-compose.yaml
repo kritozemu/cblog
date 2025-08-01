@@ -35,6 +35,14 @@ services:
       - "--web.enable-remote-write-receiver"
       - "--config.file=/etc/prometheus/prometheus.yml"
 
+  etcd:
+    image: "bitnami/etcd:latest"
+    restart: always
+    environment:
+      - ALLOW_NONE_AUTHENTICATION=yes
+    ports:
+      - "12379:2379"
+
   kafka:
     image: 'bitnami/kafka:3.6.0'
     ports:

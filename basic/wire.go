@@ -4,42 +4,35 @@ package main
 
 import (
 	"compus_blog/basic/internal/events/article"
-	"compus_blog/basic/internal/ioc"
 	"compus_blog/basic/internal/repository"
 	"compus_blog/basic/internal/repository/cache"
 	"compus_blog/basic/internal/repository/dao"
 	"compus_blog/basic/internal/service"
 	"compus_blog/basic/internal/web"
 	ijwt "compus_blog/basic/internal/web/jwt"
+	"compus_blog/basic/ioc"
 	"github.com/google/wire"
-)
-
-// interactive
-var interactiveSvcProvider = wire.NewSet(dao.NewInteractiveDAO,
-	repository.NewInteractiveRepository,
-	cache.NewInteractiveCache,
-	service.NewInteractiveService,
 )
 
 var thirdPartSet = wire.NewSet(
 	//第三方服务
 	ioc.InitDB, ioc.InitRedis,
+	ioc.InitEtcd,
 	ioc.InitLogger,
 	ioc.InitKafka,
+	ioc.InitSyncProducer,
 )
 
 func InitWebServer() *App {
 	wire.Build(
 
-		interactiveSvcProvider,
 		thirdPartSet,
 
-		// consumer
-		article.NewKafkaProducer,
-		article.NewInteractiveReadEventBatchConsumer,
-
-		ioc.InitSyncProducer,
 		ioc.NewConsumers,
+
+		ioc.InitIntrClientV1,
+		// events
+		article.NewKafkaProducer,
 
 		//dao
 		dao.NewUserDAO,

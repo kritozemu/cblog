@@ -8,13 +8,13 @@ package main
 
 import (
 	"compus_blog/basic/internal/events/article"
-	"compus_blog/basic/internal/ioc"
 	"compus_blog/basic/internal/repository"
 	"compus_blog/basic/internal/repository/cache"
 	"compus_blog/basic/internal/repository/dao"
 	"compus_blog/basic/internal/service"
 	"compus_blog/basic/internal/web"
 	"compus_blog/basic/internal/web/jwt"
+	"compus_blog/basic/ioc"
 	"github.com/google/wire"
 )
 
@@ -42,14 +42,11 @@ func InitWebServer() *App {
 	syncProducer := ioc.InitSyncProducer(client)
 	producer := article.NewKafkaProducer(syncProducer, loggerV1)
 	articleService := service.NewArticleServiceStruct(articleRepository, producer, loggerV1)
-	interactiveDAO := dao.NewInteractiveDAO(db)
-	interactiveCache := cache.NewInteractiveCache(cmdable)
-	interactiveRepository := repository.NewInteractiveRepository(interactiveDAO, interactiveCache, loggerV1)
-	interactiveService := service.NewInteractiveService(interactiveRepository, loggerV1)
-	articleHandler := web.NewArticleHandler(articleService, loggerV1, interactiveService)
+	clientv3Client := ioc.InitEtcd()
+	interactiveServiceClient := ioc.InitIntrClientV1(clientv3Client)
+	articleHandler := web.NewArticleHandler(articleService, loggerV1, interactiveServiceClient)
 	engine := ioc.InitWebServer(v, userHandler, articleHandler)
-	interactiveReadEventBatchConsumer := article.NewInteractiveReadEventBatchConsumer(client, loggerV1, interactiveRepository)
-	v2 := ioc.NewConsumers(interactiveReadEventBatchConsumer)
+	v2 := ioc.NewConsumers()
 	app := &App{
 		server:    engine,
 		consumers: v2,
@@ -59,7 +56,4 @@ func InitWebServer() *App {
 
 // wire.go:
 
-// interactive
-var interactiveSvcProvider = wire.NewSet(dao.NewInteractiveDAO, repository.NewInteractiveRepository, cache.NewInteractiveCache, service.NewInteractiveService)
-
-var thirdPartSet = wire.NewSet(ioc.InitDB, ioc.InitRedis, ioc.InitLogger, ioc.InitKafka)
+var thirdPartSet = wire.NewSet(ioc.InitDB, ioc.InitRedis, ioc.InitEtcd, ioc.InitLogger, ioc.InitKafka, ioc.InitSyncProducer)

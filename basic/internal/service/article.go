@@ -3,8 +3,8 @@ package service
 import (
 	"compus_blog/basic/internal/domain"
 	"compus_blog/basic/internal/events/article"
-	"compus_blog/basic/internal/pkg/logger"
 	"compus_blog/basic/internal/repository"
+	"compus_blog/basic/pkg/logger"
 	"context"
 	"time"
 )

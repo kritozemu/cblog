@@ -2,9 +2,9 @@ package repository
 
 import (
 	"compus_blog/basic/internal/domain"
-	"compus_blog/basic/internal/pkg/logger"
 	"compus_blog/basic/internal/repository/cache"
 	"compus_blog/basic/internal/repository/dao"
+	logger2 "compus_blog/basic/pkg/logger"
 	"context"
 	"database/sql"
 	"errors"
@@ -27,11 +27,11 @@ type UserRepository interface {
 type UserRepositoryStruct struct {
 	dao   dao.UserDAO
 	cache cache.UserCache
-	l     logger.LoggerV1
+	l     logger2.LoggerV1
 }
 
 func NewUserRepository(dao dao.UserDAO, cache cache.UserCache,
-	l logger.LoggerV1) UserRepository {
+	l logger2.LoggerV1) UserRepository {
 	return &UserRepositoryStruct{
 		dao:   dao,
 		cache: cache,
@@ -121,7 +121,7 @@ func (r *UserRepositoryStruct) FindById(ctx context.Context, uid int64) (domain.
 	err = r.cache.Set(ctx, du)
 	if err != nil {
 		// 网络崩了，也可能是 redis 崩了
-		r.l.Error("网络或者redis崩溃", logger.Error(err))
+		r.l.Error("网络或者redis崩溃", logger2.Error(err))
 	}
 
 	return r.toDomain(u), nil

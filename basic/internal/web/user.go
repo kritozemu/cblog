@@ -3,9 +3,9 @@ package web
 import (
 	"compus_blog/basic/internal/domain"
 	"compus_blog/basic/internal/errs"
-	"compus_blog/basic/internal/pkg/ginx"
 	"compus_blog/basic/internal/service"
 	ijwt "compus_blog/basic/internal/web/jwt"
+	ginx2 "compus_blog/basic/pkg/ginx"
 	"errors"
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-contrib/sessions"
@@ -46,13 +46,13 @@ func NewUserHandler(svc service.UserService, codeSvc service.CodeService,
 
 func (h *UserHandler) RegisterRoutes(server *gin.Engine) {
 	ug := server.Group("/users")
-	ug.POST("/signup", ginx.WrapBodyV1(h.SignUp))
-	ug.POST("login", ginx.WrapBodyV1(h.LoginJWT))
+	ug.POST("/signup", ginx2.WrapBodyV1(h.SignUp))
+	ug.POST("login", ginx2.WrapBodyV1(h.LoginJWT))
 	// POST /users/edit
-	ug.POST("/edit", ginx.WrapBodyAndToken(h.Edit))
+	ug.POST("/edit", ginx2.WrapBodyAndToken(h.Edit))
 	ug.POST("/logout", h.LogoutJwt)
 	// GET /users/profile
-	ug.GET("/profile", ginx.WrapToken(h.Profile))
+	ug.GET("/profile", ginx2.WrapToken(h.Profile))
 	ug.GET("/refresh_token", h.RefreshToken)
 
 	ug.POST("/login_sms/code/send", h.SendLoginSMS)
@@ -155,23 +155,23 @@ func (h *UserHandler) LoginSMS(ctx *gin.Context) {
 	})
 }
 
-func (h *UserHandler) SignUp(ctx *gin.Context, req SignUpReq) (ginx.Result, error) {
+func (h *UserHandler) SignUp(ctx *gin.Context, req SignUpReq) (ginx2.Result, error) {
 	isEmail, err := h.emailRexExp.MatchString(req.Email)
 	if err != nil {
 		ctx.String(http.StatusOK, "系统错误")
-		return ginx.Result{
+		return ginx2.Result{
 			Code: errs.UserInternalServerError,
 			Msg:  "系统错误",
 		}, err
 	}
 	if !isEmail {
-		return ginx.Result{
+		return ginx2.Result{
 			Code: errs.UserInvalidInput,
 			Msg:  "非法邮箱格式",
 		}, nil
 	}
 	if req.Password != req.ConfirmPassword {
-		return ginx.Result{
+		return ginx2.Result{
 			Code: errs.UserInvalidInput,
 			Msg:  "两次输入的密码不相等",
 		}, nil
@@ -179,13 +179,13 @@ func (h *UserHandler) SignUp(ctx *gin.Context, req SignUpReq) (ginx.Result, erro
 
 	isPassword, err := h.passwordRexExp.MatchString(req.Password)
 	if err != nil {
-		return ginx.Result{
+		return ginx2.Result{
 			Code: errs.UserInternalServerError,
 			Msg:  "系统错误",
 		}, err
 	}
 	if !isPassword {
-		return ginx.Result{
+		return ginx2.Result{
 			Code: errs.UserInvalidInput,
 			Msg:  "密码必须包含字母、数字、特殊字符",
 		}, nil
@@ -197,16 +197,16 @@ func (h *UserHandler) SignUp(ctx *gin.Context, req SignUpReq) (ginx.Result, erro
 
 	switch {
 	case err == nil:
-		return ginx.Result{
+		return ginx2.Result{
 			Msg: "OK",
 		}, nil
 	case errors.Is(err, service.ErrDuplicateEmail):
-		return ginx.Result{
+		return ginx2.Result{
 			Code: errs.UserDuplicateEmail,
 			Msg:  "邮箱冲突",
 		}, nil
 	default:
-		return ginx.Result{
+		return ginx2.Result{
 			Code: errs.UserInternalServerError,
 			Msg:  "系统错误",
 		}, err
@@ -246,44 +246,44 @@ func (h *UserHandler) Login(ctx *gin.Context) {
 	}
 }
 
-func (h *UserHandler) LoginJWT(ctx *gin.Context, req LoginJwtReq) (ginx.Result, error) {
+func (h *UserHandler) LoginJWT(ctx *gin.Context, req LoginJwtReq) (ginx2.Result, error) {
 	u, err := h.svc.Login(ctx, req.Email, req.Password)
 	switch {
 	case err == nil:
 		err = h.SetLoginToken(ctx, u.Id)
 		if err != nil {
-			return ginx.Result{
+			return ginx2.Result{
 				Code: 5,
 				Msg:  "系统错误",
 			}, err
 		}
-		return ginx.Result{
+		return ginx2.Result{
 			Msg: "OK",
 		}, nil
 	case errors.Is(err, service.ErrInvalidUserOrPassword):
-		return ginx.Result{
+		return ginx2.Result{
 			Code: errs.UserInvalidOrPassword,
 			Msg:  "用户名或者密码错误",
 		}, nil
 	default:
-		return ginx.Result{Msg: "系统错误"}, err
+		return ginx2.Result{Msg: "系统错误"}, err
 	}
 }
 
 func (h *UserHandler) LogoutJwt(ctx *gin.Context) {
 	err := h.ClearToken(ctx)
 	if err != nil {
-		ctx.JSON(http.StatusOK, ginx.Result{Code: 5, Msg: "系统错误"})
+		ctx.JSON(http.StatusOK, ginx2.Result{Code: 5, Msg: "系统错误"})
 		return
 	}
-	ctx.JSON(http.StatusOK, ginx.Result{Msg: "退出登录成功"})
+	ctx.JSON(http.StatusOK, ginx2.Result{Msg: "退出登录成功"})
 }
 
 func (h *UserHandler) Edit(ctx *gin.Context, req UserEditReq,
-	uc ijwt.UserClaims) (ginx.Result, error) {
+	uc ijwt.UserClaims) (ginx2.Result, error) {
 	birthday, err := time.Parse(time.DateOnly, req.Birthday)
 	if err != nil {
-		return ginx.Result{
+		return ginx2.Result{
 			Code: 4,
 			Msg:  "生日格式不对",
 		}, err
@@ -295,26 +295,26 @@ func (h *UserHandler) Edit(ctx *gin.Context, req UserEditReq,
 		Id:       uc.Uid,
 	})
 	if err != nil {
-		return ginx.Result{
+		return ginx2.Result{
 			Code: 5,
 			Msg:  "系统错误",
 		}, err
 	}
-	return ginx.Result{
+	return ginx2.Result{
 		Msg: "OK",
 	}, nil
 }
 
-func (h *UserHandler) Profile(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result, error) {
+func (h *UserHandler) Profile(ctx *gin.Context, uc ijwt.UserClaims) (ginx2.Result, error) {
 	u, err := h.svc.FindById(ctx, uc.Uid)
 	if err != nil {
-		return ginx.Result{
+		return ginx2.Result{
 			Code: 5,
 			Msg:  "系统错误",
 		}, err
 	}
 
-	return ginx.Result{
+	return ginx2.Result{
 		Data: ProfileUser{
 			Nickname: u.Nickname,
 			Email:    u.Email,
@@ -353,7 +353,7 @@ func (h *UserHandler) RefreshToken(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, ginx.Result{
+	ctx.JSON(http.StatusOK, ginx2.Result{
 		Msg: "OK",
 	})
 }

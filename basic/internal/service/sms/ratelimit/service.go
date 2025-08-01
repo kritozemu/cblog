@@ -1,8 +1,8 @@
 package ratelimit
 
 import (
-	"compus_blog/basic/internal/pkg/limiter"
 	"compus_blog/basic/internal/service/sms"
+	"compus_blog/basic/pkg/limiter"
 	"context"
 	"fmt"
 )

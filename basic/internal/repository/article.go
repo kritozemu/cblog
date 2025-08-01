@@ -2,9 +2,9 @@ package repository
 
 import (
 	"compus_blog/basic/internal/domain"
-	"compus_blog/basic/internal/pkg/logger"
 	"compus_blog/basic/internal/repository/cache"
 	"compus_blog/basic/internal/repository/dao"
+	logger2 "compus_blog/basic/pkg/logger"
 	"context"
 	"github.com/ecodeclub/ekit/slice"
 	"time"
@@ -25,11 +25,11 @@ type ArticleRepositoryStruct struct {
 	dao     dao.ArticleDAO
 	cache   cache.ArticleCache
 	usrRepo UserRepository
-	l       logger.LoggerV1
+	l       logger2.LoggerV1
 }
 
 func NewArticleRepository(dao dao.ArticleDAO, cache cache.ArticleCache,
-	usrRepo UserRepository, l logger.LoggerV1) ArticleRepository {
+	usrRepo UserRepository, l logger2.LoggerV1) ArticleRepository {
 	return &ArticleRepositoryStruct{
 		dao:     dao,
 		cache:   cache,
@@ -149,7 +149,7 @@ func (a *ArticleRepositoryStruct) List(ctx context.Context, uid int64, offset in
 	go func() {
 		er := a.cache.SetFirstPage(ctx, uid, data)
 		if er != nil {
-			a.l.Error("回写缓存失败", logger.Error(err))
+			a.l.Error("回写缓存失败", logger2.Error(err))
 		}
 		a.preCache(ctx, data)
 	}()
@@ -181,7 +181,7 @@ func (a *ArticleRepositoryStruct) GetPublishedById(ctx context.Context, id int64
 	}
 	usr, err := a.usrRepo.FindById(ctx, art.AuthorId)
 	if err != nil {
-		a.l.Error("未知的作者", logger.Error(err))
+		a.l.Error("未知的作者", logger2.Error(err))
 		return domain.Article{}, err
 	}
 	res := domain.Article{
@@ -203,7 +203,7 @@ func (a *ArticleRepositoryStruct) preCache(ctx context.Context, data []domain.Ar
 	if len(data) > 0 && len(data[0].Content) < 1024*1024 {
 		err := a.cache.Set(ctx, data[0])
 		if err != nil {
-			a.l.Error("提前预加载失败", logger.Error(err))
+			a.l.Error("提前预加载失败", logger2.Error(err))
 		}
 	}
 }

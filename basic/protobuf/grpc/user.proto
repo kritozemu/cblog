@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+option go_package = "basic/protobuf/grpc";
+
+message User{
+  int64 id = 1;
+  string Name = 2;
+
+  map<string,string> attributes = 4;
+  Address address = 5;
+}
+
+
+message Address{
+
+}
+
+
+service UserService{
+  rpc GetById(GetByIdRequest) returns (GetByIdResponse);
+  rpc UpdateById(UpdateByIdRequest) returns (UpdateByIdResponse);
+}
+
+message GetByIdRequest{
+  int64 id = 1;
+}
+
+message GetByIdResponse{
+  User user = 1;
+}
+
+message UpdateByIdRequest{
+  int64 id = 1;
+}
+
+message UpdateByIdResponse{
+  User user = 1;
+}
