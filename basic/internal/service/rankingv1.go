@@ -1,7 +1,7 @@
 package service
 
 import (
-	intrv1 "compus_blog/basic/api/proto/gen/intr/v1"
+	"compus_blog/basic/interactive/service"
 	"compus_blog/basic/internal/domain"
 	"compus_blog/basic/internal/repository"
 	"context"
@@ -12,13 +12,13 @@ import (
 	"time"
 )
 
-type RankingService interface {
-	TopN(ctx context.Context) error
+type RankingServiceV1 interface {
+	TopNV1(ctx context.Context) error
 }
 
-type BatchRankingService struct {
+type BatchRankingServiceV1 struct {
 	artSvc  ArticleService
-	intrSvc intrv1.InteractiveServiceClient
+	intrSvc service.InteractiveService
 	repo    repository.RankingRepository
 
 	batchSize int
@@ -30,9 +30,9 @@ type BatchRankingService struct {
 	load int64
 }
 
-func NewBatchRankingService(artSvc ArticleService, intrSvc intrv1.InteractiveServiceClient,
-	repo repository.RankingRepository) RankingService {
-	return &BatchRankingService{
+func NewBatchRankingServiceV1(artSvc ArticleService, intrSvc service.InteractiveService,
+	repo repository.RankingRepository) RankingServiceV1 {
+	return &BatchRankingServiceV1{
 		artSvc:    artSvc,
 		intrSvc:   intrSvc,
 		repo:      repo,
@@ -45,15 +45,15 @@ func NewBatchRankingService(artSvc ArticleService, intrSvc intrv1.InteractiveSer
 	}
 }
 
-func (svc *BatchRankingService) TopN(ctx context.Context) error {
-	arts, err := svc.topN(ctx)
+func (svc *BatchRankingServiceV1) TopNV1(ctx context.Context) error {
+	arts, err := svc.topNV1(ctx)
 	if err != nil {
 		return err
 	}
 	return svc.repo.ReplaceTopN(ctx, arts)
 }
 
-func (svc *BatchRankingService) topN(ctx context.Context) ([]domain.Article, error) {
+func (svc *BatchRankingServiceV1) topNV1(ctx context.Context) ([]domain.Article, error) {
 	now := time.Now()
 	// 先拿一批数据
 	offset := 0
@@ -84,22 +84,22 @@ func (svc *BatchRankingService) topN(ctx context.Context) ([]domain.Article, err
 			return src.Id
 		})
 
-		if len(ids) == 0 {
-			return nil, errors.New("文章ids为空")
-		}
-		intrs, err := svc.intrSvc.GetByIds(ctx, &intrv1.GetByIdsRequest{
-			Biz: "article", Ids: ids,
-		})
+		//if len(ids) == 0 {
+		//	return nil, errors.New("文章ids已取完或为空")
+		//}
+
+		intrs, err := svc.intrSvc.GetByIds(ctx, "article", ids)
 		if err != nil {
 			return nil, err
 		}
-		if len(intrs.Intrs) == 0 && len(ids) > 0 {
+		// 正确逻辑：仅当 ids 非空但 intrs 为空时，才返回错误
+		if len(ids) > 0 && len(intrs) == 0 {
 			return nil, errors.New("没有数据")
 		}
 		// 合并计算 score
 		// 排序
 		for _, art := range arts {
-			intr, ok := intrs.Intrs[art.Id]
+			intr, ok := intrs[art.Id]
 			if !ok {
 				// 你都没有，肯定不可能是热榜
 				continue

@@ -8,6 +8,7 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+//go:generate mockgen -source=interactive.go -package=svcmocks -destination=mocks/interactive.mock.go
 type InteractiveService interface {
 	Get(ctx context.Context, biz string, bizId int64, uid int64) (domain.Interactive, error)
 	IncrReadCnt(ctx context.Context, biz string, bizId int64) error
