@@ -13,7 +13,8 @@ type InteractiveService interface {
 	IncrReadCnt(ctx context.Context, biz string, bizId int64) error
 	Like(ctx context.Context, biz string, id int64, uid int64) error
 	CancelLike(ctx context.Context, biz string, id int64, uid int64) error
-	Collect(ctx context.Context, biz string, id, cid, uid int64) error
+	Collect(ctx context.Context, biz string, id, uid int64) error
+	CancelCollect(ctx context.Context, biz string, id int64, uid int64) error
 	GetByIds(ctx context.Context, biz string, bizIds []int64) (map[int64]domain.Interactive, error)
 }
 
@@ -70,8 +71,8 @@ func (svc *InteractiveServiceStruct) CancelLike(ctx context.Context, biz string,
 	return svc.repo.DecrLike(ctx, biz, id, uid)
 }
 
-func (svc *InteractiveServiceStruct) Collect(ctx context.Context, biz string, id, cid, uid int64) error {
-	return svc.repo.AddCollectionItem(ctx, biz, id, cid, uid)
+func (svc *InteractiveServiceStruct) Collect(ctx context.Context, biz string, id, uid int64) error {
+	return svc.repo.AddCollectionItem(ctx, biz, id, uid)
 }
 
 func (svc *InteractiveServiceStruct) CancelCollect(ctx context.Context, biz string, id int64, uid int64) error {

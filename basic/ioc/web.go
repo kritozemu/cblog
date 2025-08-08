@@ -52,6 +52,7 @@ func InitGinMiddleWares(redisClient redis.Cmdable, hdl ijwt.Handler,
 			IgnorePath("/users/signup").
 			IgnorePath("/users/login_sms/code/send").
 			IgnorePath("/users/login_sms").
+			IgnorePath("/hello").
 			CheckLogin(),
 		middleware.NewLogMiddleWareBuilder(func(ctx context.Context, al middleware.AccessLog) {
 			l.Debug("", logger.Field{Key: "access", Value: al})

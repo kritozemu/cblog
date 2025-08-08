@@ -19,12 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	InteractiveService_IncrReadCnt_FullMethodName = "/intr.v1.InteractiveService/IncrReadCnt"
-	InteractiveService_Like_FullMethodName        = "/intr.v1.InteractiveService/Like"
-	InteractiveService_CancelLike_FullMethodName  = "/intr.v1.InteractiveService/CancelLike"
-	InteractiveService_Collect_FullMethodName     = "/intr.v1.InteractiveService/Collect"
-	InteractiveService_Get_FullMethodName         = "/intr.v1.InteractiveService/Get"
-	InteractiveService_GetByIds_FullMethodName    = "/intr.v1.InteractiveService/GetByIds"
+	InteractiveService_IncrReadCnt_FullMethodName   = "/intr.v1.InteractiveService/IncrReadCnt"
+	InteractiveService_Like_FullMethodName          = "/intr.v1.InteractiveService/Like"
+	InteractiveService_CancelLike_FullMethodName    = "/intr.v1.InteractiveService/CancelLike"
+	InteractiveService_Collect_FullMethodName       = "/intr.v1.InteractiveService/Collect"
+	InteractiveService_CancelCollect_FullMethodName = "/intr.v1.InteractiveService/CancelCollect"
+	InteractiveService_Get_FullMethodName           = "/intr.v1.InteractiveService/Get"
+	InteractiveService_GetByIds_FullMethodName      = "/intr.v1.InteractiveService/GetByIds"
 )
 
 // InteractiveServiceClient is the client API for InteractiveService service.
@@ -38,6 +39,7 @@ type InteractiveServiceClient interface {
 	CancelLike(ctx context.Context, in *CancelLikeRequest, opts ...grpc.CallOption) (*CancelLikeResponse, error)
 	// Collect 收藏
 	Collect(ctx context.Context, in *CollectRequest, opts ...grpc.CallOption) (*CollectResponse, error)
+	CancelCollect(ctx context.Context, in *CancelCollectRequest, opts ...grpc.CallOption) (*CancelCollectResponse, error)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	GetByIds(ctx context.Context, in *GetByIdsRequest, opts ...grpc.CallOption) (*GetByIdsResponse, error)
 }
@@ -90,6 +92,16 @@ func (c *interactiveServiceClient) Collect(ctx context.Context, in *CollectReque
 	return out, nil
 }
 
+func (c *interactiveServiceClient) CancelCollect(ctx context.Context, in *CancelCollectRequest, opts ...grpc.CallOption) (*CancelCollectResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CancelCollectResponse)
+	err := c.cc.Invoke(ctx, InteractiveService_CancelCollect_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *interactiveServiceClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetResponse)
@@ -121,6 +133,7 @@ type InteractiveServiceServer interface {
 	CancelLike(context.Context, *CancelLikeRequest) (*CancelLikeResponse, error)
 	// Collect 收藏
 	Collect(context.Context, *CollectRequest) (*CollectResponse, error)
+	CancelCollect(context.Context, *CancelCollectRequest) (*CancelCollectResponse, error)
 	Get(context.Context, *GetRequest) (*GetResponse, error)
 	GetByIds(context.Context, *GetByIdsRequest) (*GetByIdsResponse, error)
 	mustEmbedUnimplementedInteractiveServiceServer()
@@ -144,6 +157,9 @@ func (UnimplementedInteractiveServiceServer) CancelLike(context.Context, *Cancel
 }
 func (UnimplementedInteractiveServiceServer) Collect(context.Context, *CollectRequest) (*CollectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Collect not implemented")
+}
+func (UnimplementedInteractiveServiceServer) CancelCollect(context.Context, *CancelCollectRequest) (*CancelCollectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CancelCollect not implemented")
 }
 func (UnimplementedInteractiveServiceServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
@@ -244,6 +260,24 @@ func _InteractiveService_Collect_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InteractiveService_CancelCollect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CancelCollectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InteractiveServiceServer).CancelCollect(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InteractiveService_CancelCollect_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InteractiveServiceServer).CancelCollect(ctx, req.(*CancelCollectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _InteractiveService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetRequest)
 	if err := dec(in); err != nil {
@@ -302,6 +336,10 @@ var InteractiveService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Collect",
 			Handler:    _InteractiveService_Collect_Handler,
+		},
+		{
+			MethodName: "CancelCollect",
+			Handler:    _InteractiveService_CancelCollect_Handler,
 		},
 		{
 			MethodName: "Get",

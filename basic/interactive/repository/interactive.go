@@ -17,7 +17,7 @@ type InteractiveRepository interface {
 	IncrLike(ctx context.Context, biz string, bizId, uid int64) error
 	DecrLike(ctx context.Context, biz string, bizId, uid int64) error
 	DecrCollect(ctx context.Context, biz string, bizId int64, uid int64) error
-	AddCollectionItem(ctx context.Context, biz string, bizId, cid int64, uid int64) error
+	AddCollectionItem(ctx context.Context, biz string, bizId int64, uid int64) error
 	Get(ctx context.Context, biz string, bizId int64) (domain.Interactive, error)
 	Liked(ctx context.Context, biz string, id int64, uid int64) (bool, error)
 	Collected(ctx context.Context, biz string, id int64, uid int64) (bool, error)
@@ -91,10 +91,9 @@ func (repo *InteractiveRepositoryStruct) DecrCollect(ctx context.Context, biz st
 //
 //}
 
-func (repo *InteractiveRepositoryStruct) AddCollectionItem(ctx context.Context, biz string, bizId, cid int64, uid int64) error {
+func (repo *InteractiveRepositoryStruct) AddCollectionItem(ctx context.Context, biz string, bizId int64, uid int64) error {
 	err := repo.dao.InsertCollectionBiz(ctx, dao.UserCollectionBiz{
 		Biz:   biz,
-		Cid:   cid,
 		BizId: bizId,
 		Uid:   uid,
 	})

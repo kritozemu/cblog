@@ -65,66 +65,67 @@ func (dao *GORMInteractiveDAO) GetCollectInfo(ctx context.Context,
 	return res, err
 }
 
-func (dao *GORMInteractiveDAO) InsertCollectionBiz(ctx context.Context,
-	cb UserCollectionBiz) error {
-	now := time.Now().UnixMilli()
-	cb.Ctime = now
-	cb.Utime = now
-	return dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		err := tx.Create(&cb).Error
-		if err != nil {
-			return err
-		}
-		return tx.WithContext(ctx).Clauses(clause.OnConflict{
-			DoUpdates: clause.Assignments(map[string]interface{}{
-				"collect_cnt": gorm.Expr("`collect_cnt` + 1"),
-				"utime":       now,
-			}),
-		}).Create(&Interactive{
-			Biz:        cb.Biz,
-			BizId:      cb.BizId,
-			CollectCnt: 1,
-			Ctime:      now,
-			Utime:      now,
-		}).Error
-	})
-}
-
-//func (dao *GORMInteractiveDAO) InsertCollectionBiz(ctx context.Context, cb UserCollectionBiz) error {
+//func (dao *GORMInteractiveDAO) InsertCollectionBiz(ctx context.Context,
+//	cb UserCollectionBiz) error {
 //	now := time.Now().UnixMilli()
-//	err := dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-//		err := tx.Clauses(clause.OnConflict{
-//			DoUpdates: clause.Assignments(map[string]interface{}{
-//				"utime":  now,
-//				"status": 1,
-//			}),
-//		}).Create(&UserCollectionBiz{
-//			Uid:    cb.Uid,
-//			Biz:    cb.Biz,
-//			BizId:  cb.BizId,
-//			Status: 1,
-//			Utime:  now,
-//			Ctime:  now,
-//		}).Error
+//	cb.Ctime = now
+//	cb.Utime = now
+//	return dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+//		err := tx.Create(&cb).Error
 //		if err != nil {
 //			return err
 //		}
-//
-//		err = tx.Clauses(clause.OnConflict{
-//			DoUpdates: clause.Assignments(map[string]any{
+//		return tx.WithContext(ctx).Clauses(clause.OnConflict{
+//			DoUpdates: clause.Assignments(map[string]interface{}{
 //				"collect_cnt": gorm.Expr("`collect_cnt` + 1"),
 //				"utime":       now,
 //			}),
 //		}).Create(&Interactive{
-//			Biz:   cb.Biz,
-//			BizId: cb.BizId,
-//			Ctime: now,
-//			Utime: now,
+//			Biz:        cb.Biz,
+//			BizId:      cb.BizId,
+//			CollectCnt: 1,
+//			Ctime:      now,
+//			Utime:      now,
 //		}).Error
-//		return err
 //	})
-//	return err
 //}
+
+func (dao *GORMInteractiveDAO) InsertCollectionBiz(ctx context.Context, cb UserCollectionBiz) error {
+	now := time.Now().UnixMilli()
+	err := dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		err := tx.Clauses(clause.OnConflict{
+			DoUpdates: clause.Assignments(map[string]interface{}{
+				"utime":  now,
+				"status": 1,
+			}),
+		}).Create(&UserCollectionBiz{
+			Uid:    cb.Uid,
+			Biz:    cb.Biz,
+			BizId:  cb.BizId,
+			Cid:    cb.Cid,
+			Status: 1,
+			Utime:  now,
+			Ctime:  now,
+		}).Error
+		if err != nil {
+			return err
+		}
+
+		err = tx.Clauses(clause.OnConflict{
+			DoUpdates: clause.Assignments(map[string]any{
+				"collect_cnt": gorm.Expr("`collect_cnt` + 1"),
+				"utime":       now,
+			}),
+		}).Create(&Interactive{
+			Biz:   cb.Biz,
+			BizId: cb.BizId,
+			Ctime: now,
+			Utime: now,
+		}).Error
+		return err
+	})
+	return err
+}
 
 func (dao *GORMInteractiveDAO) InsertLikeInfo(ctx context.Context,
 	biz string, id int64, uid int64) error {
@@ -290,9 +291,9 @@ type UserCollectionBiz struct {
 	// 收藏夹ID本身有索引
 	Cid int64 `gorm:"index"`
 
-	//Status uint8
-	Utime int64
-	Ctime int64
+	Status uint8
+	Utime  int64
+	Ctime  int64
 }
 
 type Interactive struct {

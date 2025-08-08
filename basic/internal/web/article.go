@@ -337,15 +337,19 @@ func (h *ArticleHandler) Like(ctx *gin.Context, req LikeReq, uc jwt.UserClaims) 
 }
 
 func (h *ArticleHandler) Collect(ctx *gin.Context, req CollectReq, uc jwt.UserClaims) (ginx.Result, error) {
-	//var err error
-	//if req.Collect {
-	//	err = h.intrSvc.Collect(ctx, h.biz, req.Id, req.Cid, uc.Uid)
-	//} else {
-	//	err = h.intrSvc.CancelLike(ctx, h.biz, req.Id, uc.Uid)
-	//}
-	_, err := h.intrSvc.Collect(ctx, &intrv1.CollectRequest{
-		Biz: h.biz, BizId: req.Id, Uid: uc.Uid, Cid: req.Cid,
-	})
+	var err error
+	if req.Collect {
+		_, err = h.intrSvc.Collect(ctx, &intrv1.CollectRequest{
+			Biz: h.biz, BizId: req.Id, Uid: uc.Uid,
+		})
+	} else {
+		_, err = h.intrSvc.CancelCollect(ctx, &intrv1.CancelCollectRequest{
+			Biz: h.biz, BizId: req.Id, Uid: uc.Uid,
+		})
+	}
+	//_, err := h.intrSvc.Collect(ctx, &intrv1.CollectRequest{
+	//	Biz: h.biz, BizId: req.Id, Uid: uc.Uid, Cid: req.Cid,
+	//})
 
 	if err != nil {
 		return ginx.Result{

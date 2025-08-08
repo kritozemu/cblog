@@ -47,9 +47,17 @@ func InitWebServer() *App {
 	articleHandler := web.NewArticleHandler(articleService, loggerV1, interactiveServiceClient)
 	engine := ioc.InitWebServer(v, userHandler, articleHandler)
 	v2 := ioc.NewConsumers()
+	rankingRedisCache := cache.NewRankingRedisCache(cmdable)
+	rankingLocalCache := cache.NewRankingLocalCache()
+	rankingRepository := repository.NewRankingRepository(rankingRedisCache, rankingLocalCache)
+	rankingService := service.NewBatchRankingService(articleService, interactiveServiceClient, rankingRepository)
+	rlockClient := ioc.InitRLockClient(cmdable)
+	rankingJob := ioc.InitRankingJob(rankingService, rlockClient, loggerV1)
+	cron := ioc.InitJobs(loggerV1, rankingJob)
 	app := &App{
 		server:    engine,
 		consumers: v2,
+		cron:      cron,
 	}
 	return app
 }
@@ -57,3 +65,5 @@ func InitWebServer() *App {
 // wire.go:
 
 var thirdPartSet = wire.NewSet(ioc.InitDB, ioc.InitRedis, ioc.InitEtcd, ioc.InitLogger, ioc.InitKafka, ioc.InitSyncProducer)
+
+var rankingServiceSet = wire.NewSet(repository.NewRankingRepository, cache.NewRankingRedisCache, cache.NewRankingLocalCache, service.NewBatchRankingService)

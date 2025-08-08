@@ -43,8 +43,16 @@ func (i *InteractiveServiceServer) CancelLike(ctx context.Context, request *intr
 }
 
 func (i *InteractiveServiceServer) Collect(ctx context.Context, request *intrv1.CollectRequest) (*intrv1.CollectResponse, error) {
-	err := i.svc.Collect(ctx, request.GetBiz(), request.GetBizId(), request.GetUid(), request.GetCid())
+	err := i.svc.Collect(ctx, request.GetBiz(), request.GetBizId(), request.GetUid())
 	return &intrv1.CollectResponse{}, err
+}
+
+func (i *InteractiveServiceServer) CancelCollect(ctx context.Context, request *intrv1.CancelCollectRequest) (*intrv1.CancelCollectResponse, error) {
+	if request.Uid <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "uid 错误")
+	}
+	err := i.svc.CancelCollect(ctx, request.GetBiz(), request.GetBizId(), request.GetUid())
+	return &intrv1.CancelCollectResponse{}, err
 }
 
 func (i *InteractiveServiceServer) Get(ctx context.Context, request *intrv1.GetRequest) (*intrv1.GetResponse, error) {

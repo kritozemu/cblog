@@ -23,10 +23,23 @@ var thirdPartSet = wire.NewSet(
 	ioc.InitSyncProducer,
 )
 
+var rankingServiceSet = wire.NewSet(
+	repository.NewRankingRepository,
+	cache.NewRankingRedisCache,
+	cache.NewRankingLocalCache,
+	service.NewBatchRankingService,
+)
+
 func InitWebServer() *App {
 	wire.Build(
 
 		thirdPartSet,
+
+		//jobs
+		ioc.InitRLockClient,
+		rankingServiceSet,
+		ioc.InitRankingJob,
+		ioc.InitJobs,
 
 		ioc.NewConsumers,
 
