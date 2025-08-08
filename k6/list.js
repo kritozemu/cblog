@@ -44,6 +44,7 @@ export default function () {
     // console.log(`响应头: ${JSON.stringify(res.headers)}`); // 查看后端是否返回认证相关提示
 
     check(res, {
-        '认证成功(2xx)': (r) => r.status >= 200 && r.status < 300,
+        "认证成功2xx": (r) => r.status >= 200 && r.status < 300,
     });
+
 }

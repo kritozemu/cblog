@@ -29,7 +29,7 @@ export default function () {
     // 检查响应是否符合预期（替代responseCallback的方式，更灵活）
     check(res, {
         "状态码为200": (r) => r.status === 200,  // 验证HTTP状态码
-        "响应时间<1s": (r) => r.timings.duration < 1000,  // 验证响应速度
+        "响应时间<1秒": (r) => r.timings.duration < 1000,  // 验证响应速度
         // 可添加更多检查，如响应内容包含特定字段等
         // "响应包含name字段": (r) => JSON.parse(r.body).name === "Tom",
     });

@@ -36,9 +36,10 @@ export default function () {
 
     // 验证请求成功
     check(res, {
-        '认证成功(2xx)': (r) => r.status >= 200 && r.status < 300,
+        "认证成功2xx": (r) => r.status >= 200 && r.status < 300,
     });
 
     // 可选：微调请求频率（若rps控制不生效，可加极短延迟）
     // sleep(0.001); // 1ms延迟，避免请求过于密集导致系统瞬间过载
+
 }
