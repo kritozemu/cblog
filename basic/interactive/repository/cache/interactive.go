@@ -116,5 +116,5 @@ func (r *InteractiveCacheStruct) Set(ctx context.Context, biz string, bizId int6
 }
 
 func (r *InteractiveCacheStruct) key(biz string, bizId int64) string {
-	return fmt.Sprintf("interactive:%s,%d", biz, bizId)
+	return fmt.Sprintf("interactive:%s:%d", biz, bizId)
 }

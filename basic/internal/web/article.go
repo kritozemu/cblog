@@ -244,7 +244,7 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context) {
 			Code: 4,
 			Msg:  "参数错误",
 		})
-		h.l.Error("前端输入的 ID 不对", logger.Error(err))
+		h.l.Error("前端输入的 ID 不对", logger.String("idstr", idstr), logger.Error(err))
 		return
 	}
 
@@ -337,19 +337,9 @@ func (h *ArticleHandler) Like(ctx *gin.Context, req LikeReq, uc jwt.UserClaims) 
 }
 
 func (h *ArticleHandler) Collect(ctx *gin.Context, req CollectReq, uc jwt.UserClaims) (ginx.Result, error) {
-	var err error
-	if req.Collect {
-		_, err = h.intrSvc.Collect(ctx, &intrv1.CollectRequest{
-			Biz: h.biz, BizId: req.Id, Uid: uc.Uid,
-		})
-	} else {
-		_, err = h.intrSvc.CancelCollect(ctx, &intrv1.CancelCollectRequest{
-			Biz: h.biz, BizId: req.Id, Uid: uc.Uid,
-		})
-	}
-	//_, err := h.intrSvc.Collect(ctx, &intrv1.CollectRequest{
-	//	Biz: h.biz, BizId: req.Id, Uid: uc.Uid, Cid: req.Cid,
-	//})
+	_, err := h.intrSvc.Collect(ctx, &intrv1.CollectRequest{
+		Biz: h.biz, BizId: req.Id, Uid: uc.Uid, Cid: req.Cid,
+	})
 
 	if err != nil {
 		return ginx.Result{

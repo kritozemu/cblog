@@ -16,8 +16,7 @@ type InteractiveRepository interface {
 	BatchIncrReadCnt(ctx context.Context, bizs []string, bizIds []int64) error
 	IncrLike(ctx context.Context, biz string, bizId, uid int64) error
 	DecrLike(ctx context.Context, biz string, bizId, uid int64) error
-	DecrCollect(ctx context.Context, biz string, bizId int64, uid int64) error
-	AddCollectionItem(ctx context.Context, biz string, bizId int64, uid int64) error
+	AddCollectionItem(ctx context.Context, biz string, bizId int64, uid int64, cid int64) error
 	Get(ctx context.Context, biz string, bizId int64) (domain.Interactive, error)
 	Liked(ctx context.Context, biz string, id int64, uid int64) (bool, error)
 	Collected(ctx context.Context, biz string, id int64, uid int64) (bool, error)
@@ -69,14 +68,6 @@ func (repo *InteractiveRepositoryStruct) DecrLike(ctx context.Context, biz strin
 	return repo.cache.DecrLikeCntIfPresent(ctx, biz, uid)
 }
 
-func (repo *InteractiveRepositoryStruct) DecrCollect(ctx context.Context, biz string, bizId int64, uid int64) error {
-	err := repo.dao.DeleteCollectInfo(ctx, biz, bizId, uid)
-	if err != nil {
-		return err
-	}
-	return repo.cache.DecrCollectCntIfPresent(ctx, biz, uid)
-}
-
 //
 //func (repo *InteractiveRepositoryStruct) DecrCollectV1(ctx context.Context, biz string, bizId int64, cid int64, uid int64) error {
 //	// 判断是否为有效取消收藏
@@ -91,11 +82,13 @@ func (repo *InteractiveRepositoryStruct) DecrCollect(ctx context.Context, biz st
 //
 //}
 
-func (repo *InteractiveRepositoryStruct) AddCollectionItem(ctx context.Context, biz string, bizId int64, uid int64) error {
+func (repo *InteractiveRepositoryStruct) AddCollectionItem(ctx context.Context,
+	biz string, bizId int64, uid int64, cid int64) error {
 	err := repo.dao.InsertCollectionBiz(ctx, dao.UserCollectionBiz{
 		Biz:   biz,
 		BizId: bizId,
 		Uid:   uid,
+		Cid:   cid,
 	})
 	if err != nil {
 		return err
