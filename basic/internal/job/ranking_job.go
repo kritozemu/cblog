@@ -23,7 +23,7 @@ func NewRankingJob(svc service.RankingService,
 	client *rlock.Client,
 	l logger.LoggerV1,
 	timeout time.Duration) *RankingJob {
-	// 根据你的数据量来，如果要是七天内的帖子数量很多，你就要设置长一点
+	// 根据数据量来，如果是七天内的帖子数量很多，就要设置长一点
 	return &RankingJob{svc: svc,
 		timeout:   timeout,
 		client:    client,
@@ -42,10 +42,10 @@ func (r *RankingJob) Run() error {
 	r.localLock.Lock()
 	defer r.localLock.Unlock()
 	if r.lock == nil {
-		// 说明你没拿到锁，你得试着拿锁
+		// 说明没拿到锁，得试着拿锁
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
-		// 我可以设置一个比较短的过期时间
+		// 设置了一个比较短的过期时间
 		lock, err := r.client.Lock(ctx, r.key, r.timeout, &rlock.FixIntervalRetry{
 			Interval: time.Millisecond * 100,
 			Max:      0,
@@ -58,7 +58,7 @@ func (r *RankingJob) Run() error {
 		go func() {
 			// 自动续约机制
 			err1 := lock.AutoRefresh(r.timeout/2, time.Second)
-			// 这里说明退出了续约机制
+			// 退出了续约机制
 			if err1 != nil {
 				r.l.Error("续约失败", logger.Error(err))
 			}

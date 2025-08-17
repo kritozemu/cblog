@@ -101,7 +101,7 @@ func (svc *BatchRankingService) topN(ctx context.Context) ([]domain.Article, err
 		for _, art := range arts {
 			intr, ok := intrs.Intrs[art.Id]
 			if !ok {
-				// 你都没有，肯定不可能是热榜
+				// 都没有，不可能是热榜
 				continue
 			}
 
@@ -125,7 +125,7 @@ func (svc *BatchRankingService) topN(ctx context.Context) ([]domain.Article, err
 		// 一批已经处理完了
 		if len(arts) < svc.batchSize ||
 			now.Sub(arts[len(arts)-1].Utime).Hours() > 7*24 {
-			// 我这一批都没取够，我当然可以肯定没有下一批了
+			// 一批都没取够，没有下一批了
 			// 又或者已经取到了七天之前的数据了，说明可以中断了
 			break
 		}

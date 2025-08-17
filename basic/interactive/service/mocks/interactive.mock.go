@@ -41,20 +41,6 @@ func (m *MockInteractiveService) EXPECT() *MockInteractiveServiceMockRecorder {
 	return m.recorder
 }
 
-// CancelCollect mocks base method.
-func (m *MockInteractiveService) CancelCollect(ctx context.Context, biz string, id, uid int64) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CancelCollect", ctx, biz, id, uid)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CancelCollect indicates an expected call of CancelCollect.
-func (mr *MockInteractiveServiceMockRecorder) CancelCollect(ctx, biz, id, uid any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CancelCollect", reflect.TypeOf((*MockInteractiveService)(nil).CancelCollect), ctx, biz, id, uid)
-}
-
 // CancelLike mocks base method.
 func (m *MockInteractiveService) CancelLike(ctx context.Context, biz string, id, uid int64) error {
 	m.ctrl.T.Helper()
@@ -70,17 +56,17 @@ func (mr *MockInteractiveServiceMockRecorder) CancelLike(ctx, biz, id, uid any) 
 }
 
 // Collect mocks base method.
-func (m *MockInteractiveService) Collect(ctx context.Context, biz string, id, uid int64) error {
+func (m *MockInteractiveService) Collect(ctx context.Context, biz string, id, uid, cid int64) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Collect", ctx, biz, id, uid)
+	ret := m.ctrl.Call(m, "Collect", ctx, biz, id, uid, cid)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Collect indicates an expected call of Collect.
-func (mr *MockInteractiveServiceMockRecorder) Collect(ctx, biz, id, uid any) *gomock.Call {
+func (mr *MockInteractiveServiceMockRecorder) Collect(ctx, biz, id, uid, cid any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Collect", reflect.TypeOf((*MockInteractiveService)(nil).Collect), ctx, biz, id, uid)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Collect", reflect.TypeOf((*MockInteractiveService)(nil).Collect), ctx, biz, id, uid, cid)
 }
 
 // Get mocks base method.

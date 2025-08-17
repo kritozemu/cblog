@@ -27,7 +27,7 @@ func NewRankingRepository(redis *cache.RankingRedisCache, local *cache.RankingLo
 func (r *RankingRepositoryStruct) GetTopN(ctx context.Context) ([]domain.Article, error) {
 	data, err := r.local.Get(ctx)
 	if err == nil {
-		return nil, err
+		return data, err
 	}
 	data, err = r.redis.Get(ctx)
 	if err == nil {
