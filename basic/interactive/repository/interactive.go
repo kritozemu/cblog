@@ -57,7 +57,7 @@ func (repo *InteractiveRepositoryStruct) IncrLike(ctx context.Context, biz strin
 	if err != nil {
 		return err
 	}
-	return repo.cache.IncrLikeCntIfPresent(ctx, biz, uid)
+	return repo.cache.IncrLikeCntIfPresent(ctx, biz, bizId)
 }
 
 func (repo *InteractiveRepositoryStruct) DecrLike(ctx context.Context, biz string, bizId, uid int64) error {
@@ -65,7 +65,7 @@ func (repo *InteractiveRepositoryStruct) DecrLike(ctx context.Context, biz strin
 	if err != nil {
 		return err
 	}
-	return repo.cache.DecrLikeCntIfPresent(ctx, biz, uid)
+	return repo.cache.DecrLikeCntIfPresent(ctx, biz, bizId)
 }
 
 //
@@ -93,7 +93,7 @@ func (repo *InteractiveRepositoryStruct) AddCollectionItem(ctx context.Context,
 	if err != nil {
 		return err
 	}
-	return repo.cache.IncrCollectCntIfPresent(ctx, biz, uid)
+	return repo.cache.IncrCollectCntIfPresent(ctx, biz, bizId)
 }
 
 func (repo *InteractiveRepositoryStruct) Get(ctx context.Context, biz string, bizId int64) (domain.Interactive, error) {
