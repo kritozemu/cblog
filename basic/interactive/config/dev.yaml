@@ -1,8 +1,8 @@
 db:
   src:
-    dsn: "root:123@tcp(localhost:13316)/webook"
+    dsn: "root:123@tcp(localhost:13316)/cblog"
   dst:
-    dsn: "root:123@tcp(localhost:13316)/webook_intr"
+    dsn: "root:123@tcp(localhost:13316)/cblog_intr"
 
 #migrator:
 #  pattern: "SRC_ONLY"
