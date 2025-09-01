@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: interactive
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: interactive
+  template:
+    metadata:
+      labels:
+        app: interactive
+    spec:
+      containers:
+        - name: interactive
+          image: interactive:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8081
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/configs
+          command: [ "./interactive" ]
+          args: [ "--config", "/app/configs/interactive.yaml" ]
+      volumes:
+        - name: config-volume
+          configMap:
+            name: interactive-config
+

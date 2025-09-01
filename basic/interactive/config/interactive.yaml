@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: interactive-config
+data:
+  interactive.yaml: |
+    test:
+      key: value1234
+
+    redis:
+      addr: "redis:6379"
+
+    db:
+      src:
+        dsn: "root:123@tcp(mysql:3306)/cblog?charset=utf8mb4&parseTime=True&loc=Local"
+      dst:
+        dsn: "root:123@tcp(mysql:3306)/cblog_intr?charset=utf8mb4&parseTime=True&loc=Local"
+
+    kafka:
+      addrs:
+        - "kafka:9092"
+
+    etcd:
+      addrs:
+        - "etcd:2379"
+
+    grpc:
+      client:
+        intr:
+          addr: "etcd:///service/interactive"

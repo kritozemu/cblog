@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: interactive-config
+  namespace: default
+data:
+  interactive.yaml: |
+    server:
+      name: "interactive"
+      port: 8081
+
+    db:
+      src:
+        dsn: "root:123@tcp(mysql:3306)/cblog?charset=utf8mb4&parseTime=True"
+      # 如果 cblog_intr 库不存在，先注释掉，等你在 mysql 里建好再打开
+      # dst:
+      #   dsn: "root:123@tcp(mysql:3306)/cblog_intr?charset=utf8mb4&parseTime=True"
+
+    etcd:
+      addrs:
+        - "etcd:2379"
+
+    kafka:
+      addrs:
+        - "kafka:9092"
+      topic: "interactive_log"
+
+    redis:
+      addr: "redis:6379"
+      db: 0

@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: internal-config
+data:
+  internal.yaml: |
+    redis:
+      addr: "redis:6379"
+
+    db:
+      dsn: "root:123@tcp(mysql:3306)/cblog"
+
+    kafka:
+      addrs:
+        - "kafka:9092"
+
+    etcd:
+      addrs:
+        - "etcd:2379"
+
+    grpc:
+      server:
+        addr: ":8090"
