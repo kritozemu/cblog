@@ -40,6 +40,7 @@ func main() {
 	server.GET("/hello", func(ctx *gin.Context) {
 		ctx.String(http.StatusOK, "你好，你来了")
 	})
+	//pprof.Register(server)
 
 	server.Run(":8080")
 
