@@ -1,0 +1,5 @@
+wrk.method="GET"
+wrk.headers["Content-Type"] = "application/json"
+wrk.headers["User-Agent"] = "PostmanRuntime/7.32.3"
+-- 记得修改这个，你在登录页面登录一下，然后复制一个过来这里
+wrk.headers["Authorization"]="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTY0MzUxMTQsIlVpZCI6NiwiU3NpZCI6ImY2MmUxYThkLThmMGItNDM3NS04ZGMyLTg1M2VhMGE5MDcyYyIsIlVzZXJBZ2VudCI6Ik1vemlsbGEvNS4wIChXaW5kb3dzIE5UIDEwLjA7IFdpbjY0OyB4NjQpIEFwcGxlV2ViS2l0LzUzNy4zNiAoS0hUTUwsIGxpa2UgR2Vja28pIENocm9tZS8xMzkuMC4wLjAgU2FmYXJpLzUzNy4zNiJ9.GtE7kIy2oZjiWnJb79gV5MQ8-EjvOOJj9XIePBwN4lw"
