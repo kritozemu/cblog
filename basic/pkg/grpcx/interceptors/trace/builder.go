@@ -32,7 +32,7 @@ func (b *InterceptorBuilder) BuildClient() grpc.UnaryClientInterceptor {
 	}
 	tracer := b.tracer
 	if tracer == nil {
-		tracer = otel.Tracer("gitee.com/geekbang/basic-go/webook/pkg/grpcx/interceptors/trace")
+		tracer = otel.Tracer("basic/pkg/grpcx/interceptors/trace")
 	}
 	attrs := []attribute.KeyValue{
 		semconv.RPCSystemKey.String("grpc"),
@@ -74,7 +74,7 @@ func (b *InterceptorBuilder) BuildServer() grpc.UnaryServerInterceptor {
 	}
 	tracer := b.tracer
 	if tracer == nil {
-		tracer = otel.Tracer("gitee.com/geekbang/basic-go/webook/pkg/grpcx/interceptors/trace")
+		tracer = otel.Tracer("basic/pkg/grpcx/interceptors/trace")
 	}
 	attrs := []attribute.KeyValue{
 		semconv.RPCSystemKey.String("grpc"),

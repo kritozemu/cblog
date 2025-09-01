@@ -9,17 +9,17 @@ import (
 )
 
 func TestConnPool(t *testing.T) {
-	webook, err := gorm.Open(mysql.Open("root:root@tcp(localhost:13316)/webook"))
+	cblog, err := gorm.Open(mysql.Open("root:root@tcp(localhost:13316)/cblog"))
 	require.NoError(t, err)
-	err = webook.AutoMigrate(&Interactive{})
+	err = cblog.AutoMigrate(&Interactive{})
 	require.NoError(t, err)
-	intr, err := gorm.Open(mysql.Open("root:root@tcp(localhost:13316)/webook_intr"))
+	intr, err := gorm.Open(mysql.Open("root:root@tcp(localhost:13316)/cblog_intr"))
 	require.NoError(t, err)
 	err = intr.AutoMigrate(&Interactive{})
 	require.NoError(t, err)
 	db, err := gorm.Open(mysql.New(mysql.Config{
 		Conn: &DoubleWritePool{
-			src:     webook.ConnPool,
+			src:     cblog.ConnPool,
 			dst:     intr.ConnPool,
 			pattern: atomicx.NewValueOf(PatternSrcFirst),
 		},

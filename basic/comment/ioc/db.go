@@ -33,7 +33,7 @@ func InitDB(l logger.LoggerV1) *gorm.DB {
 
 	// 接入 prometheus
 	err = db.Use(prometheus.New(prometheus.Config{
-		DBName: "webook",
+		DBName: "cblog",
 		// 每 15 秒采集一些数据
 		RefreshInterval: 15,
 		MetricsCollector: []prometheus.MetricsCollector{

@@ -51,7 +51,7 @@ services:
     environment:
       - KAFKA_CFG_NODE_ID=0
       #      - 三个分区
-      - KAFKA_CREATE_TOPICS=webook_binlog:3:1
+      - KAFKA_CREATE_TOPICS=cblog_binlog:3:1
       #      - 允许自动创建 topic，线上不要开启
       - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
       - KAFKA_CFG_PROCESS_ROLES=controller,broker
